@@ -44,7 +44,32 @@ public class BSTreeTest {
 
     @Test
     public void get() {
+        BSTree<String, String> bst = new BSTree<>();
+
+        // Elemente einfügen
+        bst.insert("a", "Element 1");
+        bst.insert("b", "Element 2");
+        bst.insert("c", "Element 3");
+
+        // Prüfen, ob die Elemente korrekt abgerufen werden
+        assertEquals("Element 1", bst.get("a"));
+        assertEquals("Element 2", bst.get("b"));
+        assertEquals("Element 3", bst.get("c"));
+
+        // Test: Element mit überschriebenem Schlüssel
+        bst.insert("b", "New Element 2");
+        assertEquals("New Element 2", bst.get("b")); // Neues Element sollte zurückgegeben werden
+
+        // Test: Nicht vorhandener Schlüssel
+        try {
+            bst.get("d");
+            fail("Expected NoSuchElementException");
+        } catch (NoSuchElementException e) {
+            // Ausnahme korrekt geworfen
+            assertEquals("Key not found: d", e.getMessage());
+        }
     }
+
 
     @Test
     public void size() {
