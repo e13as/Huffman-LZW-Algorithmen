@@ -1,16 +1,13 @@
 package de.hawhamburg.hamann.trees.impl;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class GraphTest {
     public static void main(String[] args) {
-        // Beispielgraph aus den Folien
+        // Beispielgraph aus der Grafik
         Graph<String, Integer> graph = createExampleGraph();
         runBasicTests(graph);
 
@@ -27,14 +24,21 @@ public class GraphTest {
         graph.addNode("C");
         graph.addNode("D");
         graph.addNode("E");
+        graph.addNode("F");
+        graph.addNode("G");
 
-        // Kanten hinzufügen
-        graph.addEdge("A", "B", 1);
-        graph.addEdge("A", "C", 6);
-        graph.addEdge("B", "D", 3);
-        graph.addEdge("B", "C", 5);
-        graph.addEdge("C", "D", 4);
-        graph.addEdge("C", "E", 2);
+        // Kanten hinzufügen (basierend auf der Grafik)
+        graph.addEdge("A", "B", 4);
+        graph.addEdge("A", "F", 10);
+        graph.addEdge("A", "G", 5);
+        graph.addEdge("B", "C", 7);
+        graph.addEdge("B", "G", 2);
+        graph.addEdge("C", "G", 1);
+        graph.addEdge("C", "D", 12);
+        graph.addEdge("G", "E", 8);
+        graph.addEdge("G", "F", 4);
+        graph.addEdge("D", "E", 4);
+        graph.addEdge("F", "E", 3);
 
         return graph;
     }
@@ -42,7 +46,25 @@ public class GraphTest {
     private static void runBasicTests(Graph<String, Integer> graph) {
         System.out.println("Breitensuche (BFS): " + graph.breadthFirstSearch("A"));
         System.out.println("Tiefensuche (DFS): " + graph.depthFirstSearch("A"));
-        System.out.println("Dijkstra von 'A': " + graph.dijkstra("A"));
+
+        // JVM Warm-up
+        for (int i = 0; i < 10; i++) {
+            graph.dijkstra("A");
+        }
+
+        // Laufzeit für Dijkstra messen (Mikrosekunden, mit Mittelwertbildung)
+        int repetitions = 10;
+        long totalDurationNs = 0;
+
+        for (int i = 0; i < repetitions; i++) {
+            long startTime = System.nanoTime();
+            graph.dijkstra("A");
+            long endTime = System.nanoTime();
+            totalDurationNs += (endTime - startTime);
+        }
+
+        long averageDurationUs = totalDurationNs / repetitions / 1_000; // ns in µs umrechnen
+        System.out.printf("Durchschnittliche Laufzeit für Dijkstra (kleiner Graph): %d µs\n", averageDurationUs);
     }
 
     private static void runPerformanceTest() {
@@ -50,34 +72,48 @@ public class GraphTest {
         List<Integer> graphSizes = new ArrayList<>();
         List<Long> runtimes = new ArrayList<>();
 
-        for (int n = 100; n <= 5000; n += 100) {
-            Graph<Integer, Integer> graph = new Graph<>();
+        for (int n = 100; n <= 9600; n += 500) {
+            Graph<Integer, Integer> testGraph = new Graph<>();
 
             // Knoten hinzufügen
             for (int i = 1; i <= n; i++) {
-                graph.addNode(i);
+                testGraph.addNode(i);
             }
 
-            // Kanten hinzufügen (zufällig)
+            // Kanten hinzufügen (zufällig, konsistente Dichte)
             for (int i = 0; i < n * 10; i++) {
                 int from = random.nextInt(n) + 1;
                 int to = random.nextInt(n) + 1;
-                int weight = random.nextInt(100) + 1; // Gewicht zwischen 1 und 100
+                int weight = random.nextInt(100) + 1;
                 if (from != to) {
-                    graph.addEdge(from, to, weight);
+                    testGraph.addEdge(from, to, weight);
                 }
             }
 
-            // Laufzeit messen
-            long startTime = System.nanoTime();
-            graph.dijkstra(1); // Startknoten: 1
-            long endTime = System.nanoTime();
+            // JVM Warm-up
+            for (int i = 0; i < 10; i++) {
+                testGraph.dijkstra(1);
+            }
+
+            // Laufzeit messen (Mikrosekunden)
+            long totalDurationNs = 0;
+            int repetitions = (n <= 1000) ? 20 : 10;
+
+            for (int i = 0; i < repetitions; i++) {
+                long startTime = System.nanoTime();
+                testGraph.dijkstra(1);
+                long endTime = System.nanoTime();
+                totalDurationNs += (endTime - startTime);
+            }
+
+            // Durchschnittliche Laufzeit in Mikrosekunden berechnen
+            long averageDurationUs = totalDurationNs / repetitions / 1_000;
 
             // Ergebnisse speichern
             graphSizes.add(n);
-            runtimes.add(endTime - startTime);
+            runtimes.add(averageDurationUs);
 
-            System.out.printf("Graph size: %d, Runtime: %d ns\n", n, endTime - startTime);
+            System.out.printf("Graph size: %d, Avg Runtime: %d µs\n", n, averageDurationUs);
         }
 
         exportToCSV(graphSizes, runtimes);
@@ -85,7 +121,7 @@ public class GraphTest {
 
     private static void exportToCSV(List<Integer> graphSizes, List<Long> runtimes) {
         try (PrintWriter writer = new PrintWriter(new File("dijkstra_performance.csv"))) {
-            writer.println("GraphSize,Runtime_ns");
+            writer.println("GraphSize,Runtime_µs");
             for (int i = 0; i < graphSizes.size(); i++) {
                 writer.printf("%d,%d\n", graphSizes.get(i), runtimes.get(i));
             }
@@ -95,4 +131,3 @@ public class GraphTest {
         }
     }
 }
-

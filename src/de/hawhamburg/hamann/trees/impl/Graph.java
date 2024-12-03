@@ -75,6 +75,7 @@ public class Graph<K, W extends Number> {
     public Map<K, Double> dijkstra(K start) {
         Map<K, Double> distances = new HashMap<>();
         PriorityQueue<Pair<K>> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(p -> p.distance));
+        Set<K> visited = new HashSet<>();
 
         for (K node : adjacencyList.keySet()) {
             distances.put(node, Double.POSITIVE_INFINITY);
@@ -85,7 +86,7 @@ public class Graph<K, W extends Number> {
         while (!priorityQueue.isEmpty()) {
             Pair<K> current = priorityQueue.poll();
 
-            if (current.distance > distances.get(current.node)) continue;
+            if (!visited.add(current.node)) continue;
 
             for (Edge<K, W> edge : adjacencyList.getOrDefault(current.node, Collections.emptyList())) {
                 double newDist = current.distance + edge.weight.doubleValue();
@@ -97,6 +98,26 @@ public class Graph<K, W extends Number> {
         }
 
         return distances;
+    }
+
+    // Überarbeitete Methode zur Durchführung von Tests
+    public static void runBasicTests(Graph<String, Integer> graph) {
+        System.out.println("Breitensuche (BFS): " + graph.breadthFirstSearch("A"));
+        System.out.println("Tiefensuche (DFS): " + graph.depthFirstSearch("A"));
+
+        // Laufzeit für Dijkstra messen (Mikrosekunden, mit Mittelwertbildung)
+        int repetitions = 10; // Mehrfachmessungen für präzisere Ergebnisse
+        long totalDurationNs = 0;
+
+        for (int i = 0; i < repetitions; i++) {
+            long startTime = System.nanoTime();
+            graph.dijkstra("A");
+            long endTime = System.nanoTime();
+            totalDurationNs += (endTime - startTime);
+        }
+
+        long averageDurationUs = totalDurationNs / repetitions / 1_000; // ns in µs umrechnen
+        System.out.printf("Durchschnittliche Laufzeit für Dijkstra (kleiner Graph): %d µs\n", averageDurationUs);
     }
 
     @Override
