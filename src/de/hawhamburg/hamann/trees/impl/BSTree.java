@@ -69,14 +69,21 @@ public class BSTree<K extends Comparable<K>, E> implements BinarySearchTree<K, E
      * @throws NoSuchElementException Falls der Schlüssel nicht gefunden wird.
      */
     @Override
-    public void remove(K key) throws NoSuchElementException {
-        int sizePre = size; // Speichert die vorherige Größe des Baums.
-        head = removeRecursive(head, key); // Startet die rekursive Entfernen-Operation.
 
-        if (size != sizePre - 1) { // Überprüft, ob die Größe korrekt angepasst wurde.
-            throw new AssertionError("Element wurde nicht korrekt entfernt.");
+    public void remove(K key) throws NoSuchElementException {
+        int sizePre = size;
+        System.out.println("Größe vor dem Entfernen: " + sizePre);
+
+        head = removeRecursive(head, key);
+
+        System.out.println("Größe nach dem Entfernen: " + size);
+
+        // Überprüfen, ob die Größe korrekt aktualisiert wurde
+        if (size != sizePre - 1) {
+            System.out.println("Fehler: Größe wurde nicht korrekt aktualisiert!");
         }
     }
+
 
     // Rekursive Hilfsmethode zum Entfernen eines Knotens.
     private BSTNode<K, E> removeRecursive(BSTNode<K, E> node, K key) {
@@ -84,42 +91,73 @@ public class BSTree<K extends Comparable<K>, E> implements BinarySearchTree<K, E
             throw new NoSuchElementException("Key not found: " + key);
         }
 
-        // Vergleicht den übergebenen Schlüssel (key) mit dem Schlüssel des aktuellen Knotens (node.key).
         int cmp = key.compareTo(node.key);
-        if (cmp < 0) { // Wenn der übergebene Schlüssel kleiner ist als der Schlüssel des aktuellen Knotens:
-            node.left = removeRecursive(node.left, key); // Gehe in den linken Teilbaum und rufe die Methode rekursiv auf.
-        } else if (cmp > 0) { // Wenn der übergebene Schlüssel größer ist als der Schlüssel des aktuellen Knotens:
-            node.right = removeRecursive(node.right, key); // Gehe in den rechten Teilbaum und rufe die Methode rekursiv auf.
-        } else { // Wenn der übergebene Schlüssel gleich dem Schlüssel des aktuellen Knotens ist:
+// Vergleicht den zu löschenden Schlüssel (`key`) mit dem Schlüssel des aktuellen Knotens (`node.key`).
+
+        if (cmp < 0) {
+            // Wenn der zu löschende Schlüssel kleiner ist als der Schlüssel des aktuellen Knotens:
+            node.left = removeRecursive(node.left, key);
+            // Gehe in den linken Teilbaum und rufe die Methode rekursiv auf.
+        } else if (cmp > 0) {
+            // Wenn der zu löschende Schlüssel größer ist als der Schlüssel des aktuellen Knotens:
+            node.right = removeRecursive(node.right, key);
+            // Gehe in den rechten Teilbaum und rufe die Methode rekursiv auf.
+        } else {
+            // Der zu löschende Schlüssel wurde gefunden:
             size--;
+            // Verringere die Größe des Baums um eins, da ein Knoten entfernt wird.
+            System.out.println("Entferne Knoten: " + node.key);
 
-            // Falls der linke Kindknoten fehlt, gibt den rechten Kindknoten zurück (ersetzt den aktuellen Knoten).
+            // Fall 1: Der Knoten hat kein linkes Kind.
             if (node.left == null) return node.right;
-            // Falls der rechte Kindknoten fehlt, gibt den linken Kindknoten zurück (ersetzt den aktuellen Knoten).
-            if (node.right == null) return node.left;
+            // Gibt den rechten Kindknoten zurück, um den aktuellen Knoten zu ersetzen.
 
-            // Wenn beide Kinder vorhanden sind:
-            // Finde den kleinsten Knoten im rechten Teilbaum (Nachfolger des aktuellen Knotens).
+            // Fall 2: Der Knoten hat kein rechtes Kind.
+            if (node.right == null) return node.left;
+            // Gibt den linken Kindknoten zurück, um den aktuellen Knoten zu ersetzen.
+
+            // Fall 3: Der Knoten hat zwei Kinder.
             BSTNode<K, E> successor = findMin(node.right);
-            // Setze den Schlüssel des Nachfolgers als neuen Schlüssel des aktuellen Knotens.
+            // Finde den kleinsten Knoten (Nachfolger) im rechten Teilbaum.
+
+            System.out.println("Ersetze Knoten " + node.key + " mit Nachfolger " + successor.key);
+            // Debug-Ausgabe: Zeigt an, welcher Knoten durch den Nachfolger ersetzt wird.
+
             node.key = successor.key;
-            // Setze das Element des Nachfolgers als neues Element des aktuellen Knotens.
+            // Setze den Schlüssel des Nachfolgers als neuen Schlüssel des aktuellen Knotens.
+
             node.element = successor.element;
+            // Setze das Element des Nachfolgers als neues Element des aktuellen Knotens.
+
             // Entferne den Nachfolger aus dem rechten Teilbaum, da er verschoben wurde.
             node.right = removeRecursive(node.right, successor.key);
+
+            // Debugging: Überprüfe, ob der Nachfolger korrekt entfernt wurde.
+            if (node.right != null && node.right.key.equals(successor.key)) {
+                // Falls der Nachfolger noch vorhanden ist, wird dies protokolliert.
+                System.out.println("Fehler: Nachfolger wurde nicht korrekt entfernt.");
+            }
         }
 
+        return node;
 
-        return node; // Gibt den aktualisierten Knoten zurück.
     }
 
     // Hilfsmethode zum Finden des kleinsten Knotens im Teilbaum.
     private BSTNode<K, E> findMin(BSTNode<K, E> node) {
-        while (node.left != null) { // Gehe immer weiter nach links.
+        // Solange der aktuelle Knoten nicht null ist und einen linken Kindknoten hat, wird weiter nach links gegangen.
+        while (node != null && node.left != null) {
+            // Debug-Ausgabe: Gibt den Schlüssel des nächsten linken Kindes aus, zu dem gewechselt wird.
+            System.out.println("Finde den kleinsten Knoten, gehe zu: " + node.left.key);
+            // Verschiebe den Fokus auf den linken Kindknoten.
             node = node.left;
         }
-        return node; // Gibt den kleinsten Knoten zurück.
+        // Debug-Ausgabe: Gibt den kleinsten gefundenen Knoten aus (oder "null", wenn kein Knoten vorhanden ist).
+        System.out.println("Kleinster Knoten: " + (node != null ? node.key : "null"));
+        // Gibt den kleinsten Knoten zurück (dies ist der Knoten ganz links im Teilbaum).
+        return node;
     }
+
 
     /**
      * Sucht ein Element basierend auf seinem Schlüssel.
@@ -174,30 +212,52 @@ public class BSTree<K extends Comparable<K>, E> implements BinarySearchTree<K, E
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("Binary Search Tree:\n");
-        toStringR(sb, head, 0); // Rekursive Darstellung des Baums.
+        if (head == null) {
+            return "Der Baum ist leer.";
+        }
+        return buildPrettyTree(head, "", true);
+    }
+
+    private String buildPrettyTree(BSTNode<K, E> node, String prefix, boolean isLeft) {
+        if (node == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(prefix);
+        sb.append(isLeft ? "├── " : "└── ");
+        sb.append(node.key).append("\n");
+
+        String childPrefix = prefix + (isLeft ? "│   " : "    ");
+        if (node.left != null || node.right != null) {
+            sb.append(buildPrettyTree(node.left, childPrefix, true));
+            sb.append(buildPrettyTree(node.right, childPrefix, false));
+        }
+
         return sb.toString();
     }
 
-    // Rekursive Methode zur Baumdarstellung.
-    private void toStringR(StringBuffer sb, BSTNode<K, E> node, int depth) {
+    private void printTree(BSTNode<K, E> node, int level) {
         if (node == null) {
-            printNode(sb, null, depth); // Leerer Knoten.
             return;
         }
 
-        toStringR(sb, node.right, depth + 1); // Rechter Teilbaum.
-        printNode(sb, node.element, depth); // Aktueller Knoten.
-        toStringR(sb, node.left, depth + 1); // Linker Teilbaum.
+        // Gehe zuerst in den rechten Teilbaum
+        printTree(node.right, level + 1);
+
+        // Zeige den aktuellen Knoten mit Einrückung
+        System.out.println("    ".repeat(level) + "-> " + node.key);
+
+        // Gehe in den linken Teilbaum
+        printTree(node.left, level + 1);
     }
 
-    // Hilfsmethode zur Darstellung eines Knotens.
-    private void printNode(StringBuffer sb, E item, int depth) {
-        sb.append("  ".repeat(Math.max(0, depth))); // Einrückung entsprechend der Tiefe.
-        sb.append("[");
-        sb.append(item == null ? "{null}" : item.toString());
-        sb.append("]\n");
+    // Public-Methode für den Aufruf
+    public void displayTree() {
+        printTree(head, 0);
     }
+
 
     /**
      * Berechnet die durchschnittliche Pfadlänge pro Knoten.

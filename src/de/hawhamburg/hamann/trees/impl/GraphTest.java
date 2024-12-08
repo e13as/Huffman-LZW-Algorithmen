@@ -7,20 +7,26 @@ public class GraphTest {
         // Beispielgraph aus der Vorlesung
         Graph<String, Integer> graph = createExampleGraph();
 
-        // Tiefensuche und Breitensuche testen
-        System.out.println("Breitensuche (BFS): " + graph.breadthFirstSearch("A"));
-        System.out.println("Tiefensuche (DFS): " + graph.depthFirstSearch("A"));
+        // Laufzeitmessung für BFS
+        long startTimeBFS = System.nanoTime();
+        List<String> bfsPath = graph.bfsWithPath("A", "E");
+        long endTimeBFS = System.nanoTime();
+        long durationBFSUs = (endTimeBFS - startTimeBFS) / 1_000;
+        System.out.printf("Breitensuche (BFS) Pfad von A nach E: %s, Laufzeit: %d µs\n", bfsPath, durationBFSUs);
 
-        // Dijkstra-Algorithmus testen
-        Map<String, Double> shortestPaths = graph.dijkstra("A");
-        System.out.println("Kürzeste Pfade (Dijkstra) von A: " + shortestPaths);
+        // Laufzeitmessung für DFS
+        long startTimeDFS = System.nanoTime();
+        List<String> dfsPath = graph.dfsWithPath("A", "E");
+        long endTimeDFS = System.nanoTime();
+        long durationDFSUs = (endTimeDFS - startTimeDFS) / 1_000;
+        System.out.printf("Tiefensuche (DFS) Pfad von A nach E: %s, Laufzeit: %d µs\n", dfsPath, durationDFSUs);
 
-        // Laufzeitüberprüfung für Dijkstra mit kleiner Testbasis
-        long startTime = System.nanoTime();
-        graph.dijkstra("A");
-        long endTime = System.nanoTime();
-        long durationUs = (endTime - startTime) / 1_000; // ns in µs umrechnen
-        System.out.printf("Laufzeit für Dijkstra (Beispielgraph): %d µs\n", durationUs);
+        // Laufzeitmessung für Dijkstra
+        long startTimeDijkstra = System.nanoTime();
+        List<String> dijkstraPath = graph.dijkstraWithPath("A", "E");
+        long endTimeDijkstra = System.nanoTime();
+        long durationDijkstraUs = (endTimeDijkstra - startTimeDijkstra) / 1_000;
+        System.out.printf("Dijkstra Pfad von A nach E: %s, Laufzeit: %d µs\n", dijkstraPath, durationDijkstraUs);
     }
 
     private static Graph<String, Integer> createExampleGraph() {

@@ -42,7 +42,7 @@ public class BSTAnalysis {
                 totalPathLength += bst.getAveragePathLength();
             }
 
-            // Berechnung der durchschnittlichen Pfadlänge über alle Trials
+            // Berechnung der durchschnittlichen Pfadlänge
             double avgPathLength = totalPathLength / 1000;
 
             // Ergebnisse speichern

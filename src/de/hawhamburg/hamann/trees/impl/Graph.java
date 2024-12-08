@@ -58,76 +58,87 @@ public class Graph<K, W extends Number> {
      * @param start Der Startknoten der Suche.
      * @return Eine Liste der besuchten Knoten in der Reihenfolge ihres Besuchs.
      */
-    public List<K> depthFirstSearch(K start) {
-        // Initialisiert eine Liste für besuchte Knoten
-        List<K> visited = new ArrayList<>();
-        // Initialisiert ein Set, um bereits besuchte Knoten zu verfolgen
-        Set<K> visitedSet = new HashSet<>();
-        // Startet die rekursive Tiefensuche
-        dfsRecursive(start, visited, visitedSet);
-        // Gibt die Liste der besuchten Knoten zurück
-        return visited;
+    public List<K> dfsWithPath(K start, K target) {
+        // Map zur Speicherung des Vorgängers jedes Knotens
+        Map<K, K> previous = new HashMap<>();
+        // Set zur Verfolgung der bereits besuchten Knoten
+        Set<K> visited = new HashSet<>();
+
+        // Starte die rekursive Tiefensuche
+        dfsRecursiveWithPath(start, target, visited, previous);
+
+        // Rekonstruiere den Pfad vom Zielknoten zum Startknoten
+        return reconstructPath(previous, start, target);
     }
 
-    /**
-     * Rekursive Hilfsmethode für die Tiefensuche.
-     * @param current Der aktuell zu besuchende Knoten.
-     * @param visited Liste der bisher besuchten Knoten.
-     * @param visitedSet Menge zur Verfolgung der bereits besuchten Knoten.
-     */
-    private void dfsRecursive(K current, List<K> visited, Set<K> visitedSet) {
-        // Beendet die Methode, wenn der aktuelle Knoten bereits besucht wurde
-        if (visitedSet.contains(current)) return;
-
-        // Fügt den aktuellen Knoten zur Liste der besuchten Knoten hinzu
+    private boolean dfsRecursiveWithPath(K current, K target, Set<K> visited, Map<K, K> previous) {
+        // Markiere den aktuellen Knoten als besucht
         visited.add(current);
-        // Markiert den Knoten als besucht
-        visitedSet.add(current);
 
-        // Iteriert über alle ausgehenden Kanten des aktuellen Knotens
-        for (Edge<K, W> edge : adjacencyList.getOrDefault(current, Collections.emptyList())) {
-            // Ruft rekursiv dfsRecursive für jeden Zielknoten auf
-            dfsRecursive(edge.target, visited, visitedSet);
+        // Abbruchbedingung: Zielknoten gefunden
+        if (current.equals(target)) {
+            return true;
         }
+
+        // Durchlaufe alle Kanten des aktuellen Knotens, um dessen Nachbarn zu besuchen
+        for (Edge<K, W> edge : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+            K neighbor = edge.target; // Zielknoten der aktuellen Kante (Nachbar des aktuellen Knotens)
+
+            // Überprüfe, ob der Nachbar bereits besucht wurde
+            if (!visited.contains(neighbor)) {
+                previous.put(neighbor, current); // Speichere den aktuellen Knoten als Vorgänger des Nachbarn
+
+                // Führe eine rekursive Tiefensuche für den Nachbarn durch
+                // Wenn der Zielknoten während der Rekursion gefunden wird, beende die Suche
+                if (dfsRecursiveWithPath(neighbor, target, visited, previous)) {
+                    return true; // Ziel wurde gefunden, Rekursion beenden
+                }
+            }
+        }
+        // kein Pfad gefunden wurde
+        return false;
     }
 
-    /**
-     * Führt eine Breitensuche (BFS) ab einem Startknoten durch.
-     * Diese Methode verwendet eine Warteschlange, um die Suche iterativ zu gestalten.
-     * @param start Der Startknoten der Suche.
-     * @return Eine Liste der besuchten Knoten in der Reihenfolge ihres Besuchs.
-     */
-    public List<K> breadthFirstSearch(K start) {
-        // Initialisiert eine Liste für die besuchten Knoten
-        List<K> visited = new ArrayList<>();
-        // Initialisiert ein Set, um bereits besuchte Knoten zu verfolgen
-        Set<K> visitedSet = new HashSet<>();
-        // Initialisiert eine Warteschlange für die Knoten, die besucht werden sollen
+        /**
+         * Führt eine Breitensuche (BFS) ab einem Startknoten durch.
+         * Diese Methode verwendet eine Warteschlange, um die Suche iterativ zu gestalten.
+         * @param start Der Startknoten der Suche.
+         * @return Eine Liste der besuchten Knoten in der Reihenfolge ihres Besuchs.
+         */
+    public List<K> bfsWithPath(K start, K target) {
+        // Warteschlange für die Knoten, die besucht werden sollen
         Queue<K> queue = new LinkedList<>();
+        // Map zur Speicherung des Vorgängers jedes Knotens
+        Map<K, K> previous = new HashMap<>();
+        // Set zur Verfolgung der bereits besuchten Knoten
+        Set<K> visited = new HashSet<>();
 
-        // Fügt den Startknoten zur Warteschlange und zum Set hinzu
+        // Startknoten in die Warteschlange einfügen und als besucht markieren
         queue.add(start);
-        visitedSet.add(start);
+        visited.add(start);
 
-        // Durchläuft die Warteschlange, bis sie leer ist
+        // BFS-Hauptschleife
         while (!queue.isEmpty()) {
-            // Entfernt den ersten Knoten aus der Warteschlange
-            K current = queue.poll();
-            // Fügt den aktuellen Knoten zur Liste der besuchten Knoten hinzu
-            visited.add(current);
+            K current = queue.poll(); // Entfernt den ersten Knoten aus der Warteschlange
 
-            // Iteriert über alle ausgehenden Kanten des aktuellen Knotens
+            // Abbruch, wenn der Zielknoten erreicht ist
+            if (current.equals(target)) {
+                break;
+            }
+
+            // Iteriere über alle Nachbarn des aktuellen Knotens
             for (Edge<K, W> edge : adjacencyList.getOrDefault(current, Collections.emptyList())) {
-                // Fügt Zielknoten zur Warteschlange und zum Set hinzu, falls er noch nicht besucht wurde
-                if (!visitedSet.contains(edge.target)) {
-                    queue.add(edge.target);
-                    visitedSet.add(edge.target);
+                K neighbor = edge.target;
+                if (!visited.contains(neighbor)) { // Falls Nachbar noch nicht besucht wurde
+                    visited.add(neighbor); // Als besucht markieren
+                    previous.put(neighbor, current); // Vorgänger speichern
+                    queue.add(neighbor); // Nachbar zur Warteschlange hinzufügen
                 }
             }
         }
 
-        // Gibt die Liste der besuchten Knoten zurück
-        return visited;
+        // Rekonstruiere den Pfad vom Zielknoten zum Startknoten
+        return reconstructPath(previous, start, target);
     }
 
     /**
@@ -135,46 +146,74 @@ public class Graph<K, W extends Number> {
      * @param start Der Startknoten.
      * @return Eine Map, die jedem Knoten die kürzeste Distanz vom Startknoten zuordnet.
      */
-    public Map<K, Double> dijkstra(K start) {
-        // Initialisiert die Map für Distanzen mit unendlichen Werten
+    public List<K> dijkstraWithPath(K start, K target) {
+        // eine Map zur Speicherung der kürzesten Distanzen .
         Map<K, Double> distances = new HashMap<>();
-        // Initialisiert eine Prioritätswarteschlange für die Knoten und ihre Distanzen
+        // Speichert die vorherigen Knoten, um den kürzesten Pfad rekonstruieren zu können.
+        Map<K, K> previous = new HashMap<>();
+        // Prioritätswarteschlange für die Knoten, sortiert nach Distanz.
         PriorityQueue<Pair<K>> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(p -> p.distance));
-        // Initialisiert ein Set für besuchte Knoten
+        // Set zur Verfolgung der bereits besuchten Knoten.
         Set<K> visited = new HashSet<>();
 
-        // Setzt die Distanz aller Knoten auf unendlich, außer des Startknotens
+        // Initialisiert alle Distanzen auf "unendlich".
         for (K node : adjacencyList.keySet()) {
             distances.put(node, Double.POSITIVE_INFINITY);
         }
+        // Setzt die Distanz des Startknotens auf 0.
         distances.put(start, 0.0);
-        // Fügt den Startknoten zur Warteschlange hinzu
+        // Fügt den Startknoten mit Distanz 0 zur Warteschlange hinzu.
         priorityQueue.add(new Pair<>(start, 0.0));
 
         // Hauptschleife des Algorithmus
         while (!priorityQueue.isEmpty()) {
-            // Entfernt den Knoten mit der kleinsten Distanz aus der Warteschlange
+            // Entfernt den Knoten mit der kleinsten Distanz aus der Warteschlange.
             Pair<K> current = priorityQueue.poll();
 
-            // Überspringt den Knoten, wenn er bereits besucht wurde
+            // Überspringt den Knoten, wenn er bereits besucht wurde.
             if (!visited.add(current.node)) continue;
 
-            // Iteriert über alle ausgehenden Kanten des aktuellen Knotens
+            // Bricht ab, wenn der Zielknoten erreicht ist.
+            if (current.node.equals(target)) {
+                break; // Zielknoten gefunden
+            }
+
+            // Iteriert über alle Nachbarn des aktuellen Knotens.
             for (Edge<K, W> edge : adjacencyList.getOrDefault(current.node, Collections.emptyList())) {
-                // Berechnet die neue Distanz zum Zielknoten
+                // Berechnet die neue Distanz zum Zielknoten.
                 double newDist = current.distance + edge.weight.doubleValue();
-                // Aktualisiert die Distanz, wenn die neue Distanz kürzer ist
+
+                // Aktualisiert die Distanz, wenn die neue Distanz kürzer ist.
                 if (newDist < distances.get(edge.target)) {
-                    distances.put(edge.target, newDist);
-                    // Fügt den Zielknoten mit der aktualisierten Distanz zur Warteschlange hinzu
+                    distances.put(edge.target, newDist); // Kürzeste Distanz speichern.
+                    previous.put(edge.target, current.node); // Vorgänger speichern.
+                    // Fügt den Zielknoten mit der aktualisierten Distanz zur Warteschlange hinzu.
                     priorityQueue.add(new Pair<>(edge.target, newDist));
                 }
             }
         }
 
-        // Gibt die Map mit den kürzesten Distanzen zurück
-        return distances;
+        // Rekonstruiert den Pfad vom Startknoten zum Zielknoten.
+        return reconstructPath(previous, start, target);
     }
+
+    private List<K> reconstructPath(Map<K, K> previous, K start, K target) {
+        // Liste zur Speicherung des rekonstruierten Pfads.
+        List<K> path = new LinkedList<>();
+
+        // Beginnt beim Zielknoten und geht rückwärts zum Startknoten.
+        for (K at = target; at != null; at = previous.get(at)) {
+            path.add(0, at); // Fügt den aktuellen Knoten am Anfang der Liste ein.
+        }
+
+        // Prüft, ob der Pfad tatsächlich beim Startknoten beginnt.
+        if (path.get(0).equals(start)) {
+            return path; // Erfolgreich rekonstruierter Pfad.
+        }
+
+        return Collections.emptyList(); // Kein Pfad gefunden.
+    }
+
 
 
     @Override
